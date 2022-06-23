@@ -1,7 +1,7 @@
 name: Lint Pull Requests
 on:
   pull_request:
-    branches: [master]
+    branches: [master, staging/**, develop/**]
     types: [ready_for_review,reopened,review_requested,review_request_removed,opened,edited]
 jobs:
   build:
@@ -9,10 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'distributed-gitflow-app[bot]' }}
     steps:
-      - uses: actions/checkout@v1
-      - name: Danger
-        uses: danger/danger-js@9.1.6
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install '@babel/plugin-transform-flow-strip-types'  
+      - name: Run Danger.js Checks
+        uses: danger/danger-js@11.0.7
         with:
-          args : '--dangerfile .github/distributed-git-flow/pr-linterr-danger.js'
+          args : '--dangerfile .github/distributed-git-flow/pr-linter-danger.js'
         env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

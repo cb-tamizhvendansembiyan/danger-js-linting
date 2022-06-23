@@ -1,5 +1,5 @@
 const { Octokit } = require("@octokit/rest");
-const prLinter = require("./distributed-git-flow/pr-linter");
+const prLinter = require("./pr-linter");
 
 const octokit = new Octokit({
   auth: process.env.GH_PAT,

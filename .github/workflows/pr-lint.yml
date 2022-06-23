@@ -5,7 +5,7 @@ on:
     types: [ready_for_review,reopened,review_requested,review_request_removed,opened,edited]
 jobs:
   build:
-    name: Danger JS
+    name: Lint Pull Requests
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'distributed-gitflow-app[bot]' }}
     steps:

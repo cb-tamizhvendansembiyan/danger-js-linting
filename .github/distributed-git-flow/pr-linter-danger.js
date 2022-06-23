@@ -1,4 +1,4 @@
-const danger = require("danger");
+import { danger, fail, warn } from 'danger'
 const prLinter = require("./pr-linter");
 
-prLinter.lintPr(danger, danger.github.pr)
+prLinter.lintPr({fail, warn}, danger.github.pr)

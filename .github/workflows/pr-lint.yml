@@ -7,13 +7,13 @@ jobs:
   build:
     name: Lint Pull Requests
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'cb-tamizhvendansembiyan' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - run: npm install '@babel/plugin-transform-flow-strip-types'  
       - name: Run Danger.js Checks
         uses: danger/danger-js@11.0.7
+        if: ${{ github.actor != 'cb-tamizhvendansembiyan' }}
         with:
           args : '--dangerfile .github/distributed-git-flow/pr-linter-danger.js'
         env:

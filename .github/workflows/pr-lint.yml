@@ -2,12 +2,11 @@ name: Lint Pull Requests
 on:
   pull_request:
     branches: [master, staging/**, develop/**]
-    types: [ready_for_review,reopened,review_requested,review_request_removed,opened,edited]
+    types: [ready_for_review,reopened,review_requested,review_request_removed,opened,edited,synchronize]
 jobs:
   build:
     name: Lint Pull Requests
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'distributed-gitflow-app[bot]' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -18,3 +17,4 @@ jobs:
           args : '--dangerfile .github/distributed-git-flow/pr-linter-danger.js'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALTASSIAN_HOST_NAME: mypanda

@@ -3,7 +3,7 @@ const prEnabler = require("./pr-enabler");
 const fs = require("fs");
 
 function lintPr(reporter, pr) {
-  if (isPrFromStagingToDevelopBranch(pr) || isPrFromMasterToStagingBranch(pr)) {
+  if (prEnabler.isPrFromStagingToDevelopBranch(pr) || prEnabler.isPrFromMasterToStagingBranch(pr)) {
     return
   }
   if (prEnabler.isPrToDevelopBranch(pr)) {

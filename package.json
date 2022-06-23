@@ -1,0 +1,24 @@
+{
+  "name": "danger-js-linting",
+  "version": "1.0.0",
+  "description": "",
+  "main": "pr-checks-danger.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cb-tamizhvendansembiyan/danger-js-linting.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cb-tamizhvendansembiyan/danger-js-linting/issues"
+  },
+  "homepage": "https://github.com/cb-tamizhvendansembiyan/danger-js-linting#readme",
+  "devDependencies": {
+    "@octokit/rest": "^18.12.0",
+    "danger": "^11.0.7"
+  }
+}

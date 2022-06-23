@@ -7,7 +7,7 @@ jobs:
   build:
     name: Lint Pull Requests
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'distributed-gitflow-app[bot]' }}
+    if: ${{ github.actor != 'cb-tamizhvendansembiyan' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

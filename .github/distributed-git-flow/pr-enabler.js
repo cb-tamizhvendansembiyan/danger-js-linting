@@ -22,4 +22,13 @@ function isMergeConflictResolutionPr(pr) {
   return pr.title.startsWith("Parent branch sync");
 }
 
-module.exports = {isPrToDevelopBranch, isPrToStagingBranch, isPrToMasterBranch, isPrFromDevelopBranch, isPrFromStagingBranch, isMergeConflictResolutionPr}
+function isPrFromStagingToDevelopBranch(pr) {
+  return pr.head.ref.replace(/staging/g, "develop") === pr.base.ref
+}
+
+function isPrFromMasterToStagingBranch(pr) {
+  return pr.head.ref === "master" && pr.base.ref.startsWith("staging/")
+}
+
+module.exports = {isPrToDevelopBranch, isPrToStagingBranch, isPrToMasterBranch, isPrFromDevelopBranch, 
+  isPrFromStagingBranch, isMergeConflictResolutionPr, isPrFromStagingToDevelopBranch, isPrFromMasterToStagingBranch}

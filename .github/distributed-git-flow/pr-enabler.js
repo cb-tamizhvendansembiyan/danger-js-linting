@@ -18,4 +18,8 @@ function isPrFromStagingBranch(pr) {
   return pr.head.ref.startsWith("staging/");
 }
 
-module.exports = {isPrToDevelopBranch, isPrToStagingBranch, isPrToMasterBranch, isPrFromDevelopBranch, isPrFromStagingBranch}
+function isMergeConflictResolutionPr(pr) {
+  return pr.title.startsWith("Parent branch sync");
+}
+
+module.exports = {isPrToDevelopBranch, isPrToStagingBranch, isPrToMasterBranch, isPrFromDevelopBranch, isPrFromStagingBranch, isMergeConflictResolutionPr}

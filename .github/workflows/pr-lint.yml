@@ -18,3 +18,4 @@ jobs:
           args : '--dangerfile .github/distributed-git-flow/pr-linter-danger.js'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALTASSIAN_HOST_NAME: mypanda

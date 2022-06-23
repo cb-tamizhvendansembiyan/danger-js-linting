@@ -1,8 +1,8 @@
 const PR_TITLE_REGEX = /^([\w-]+)\s?\((chore|docs|fix|feat|perf|refactor|style|test)\):\s?([\w+\s]+)/;
 
-function parseBody(prBody) {
+function parseBody(prBody, lineSeparator) {
   let sections = {};
-  let lines = prBody.split("\r\n");
+  let lines = prBody.split(lineSeparator || "\r\n");
   let currentSection = null;
   lines.forEach(line => {
     if (line.startsWith("##")) {

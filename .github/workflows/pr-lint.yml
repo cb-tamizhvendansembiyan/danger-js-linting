@@ -5,13 +5,14 @@ on:
     types: [ready_for_review,reopened,review_requested,review_request_removed,opened,edited]
 jobs:
   build:
-  name: Danger JS
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v1
-    - name: Danger
-      uses: danger/danger-js@9.1.6
-      with:
-        args : '--dangerfile .github/distributed-git-flow/pr-linterr-danger.js'
-      env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: Lint Pull Requests
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'distributed-gitflow-app[bot]' }}
+    steps:
+      - uses: actions/checkout@v1
+      - name: Danger
+        uses: danger/danger-js@9.1.6
+        with:
+          args : '--dangerfile .github/distributed-git-flow/pr-linterr-danger.js'
+        env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

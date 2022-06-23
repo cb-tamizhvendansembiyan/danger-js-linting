@@ -2,7 +2,7 @@ name: Lint Pull Requests
 on:
   pull_request:
     branches: [master, staging/**, develop/**]
-    types: [ready_for_review,reopened,review_requested,review_request_removed,opened,edited]
+    types: [ready_for_review,reopened,review_requested,review_request_removed,opened,edited,synchronize]
 jobs:
   build:
     name: Lint Pull Requests

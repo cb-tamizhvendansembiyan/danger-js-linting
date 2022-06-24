@@ -77,18 +77,37 @@ function lintJiraIssueUrl(reporter, jiraIssueId, jiraIssueUrlSection) {
   }
 }
 
-function lintRootCause(reporter, rootCauseSection) {
-  if (rootCauseSection.lines[0].trim().toLowerCase() == "n/a") {
+function hasPopulatedWithNotAvailable(section) {
+  return section.lines[0].trim().toLowerCase() == "n/a";
+}
+
+function lintThePresenceofNotAvailable(reporter, rootCauseSection) {
+  if (hasPopulatedWithNotAvailable(rootCauseSection)) {
     reporter.fail(`${rootCauseSection.title}: Should not contain ${rootCauseSection.lines[0]}`);
   } 
 }
 
-function lintAtomicChangePrBodySection(reporter, jiraIssueId, key, prSection) {
-  if (key == "JIRA ISSUE URL") {
-    return lintJiraIssueUrl(reporter, jiraIssueId, prSection);
+function lintPrism8ReportUrl(reporter, prism8ReportUrlSection) {
+  if (prism8ReportUrlSection.lines.length > 1) {
+    reporter.fail(`${prism8ReportUrlSection.title} section should contain only one line with the corresponding PRISM URLs. A PR should always point to one latest PRISM RUN` )
+    return;
   }
-  if (key == "ROOT CAUSE") {
-    return lintRootCause(reporter, prSection);
+}
+
+function lintAtomicChangePrBodySection(reporter, jiraIssueId, key, prSection) {
+  switch (key) {
+    case "JIRA ISSUE URL":
+      return lintJiraIssueUrl(reporter, jiraIssueId, prSection);
+    case "ROOT CAUSE":
+    case "SUMMARY_OF_CHANGE(s)":
+    case "AREAS_OF_IMPACT":
+    case "SUMMARY OF THE IMPROVEMENT MADE":
+    case "OLD_METRIC":
+    case "NEW_METRIC":
+    case "REASON FOR REFACTORING":
+      return lintThePresenceofNotAvailable(reporter, prSection);
+    case "PRISM 8 REPORT URL":
+      return lintPrism8ReportUrl(reporter, prSection)
   }
 }
 

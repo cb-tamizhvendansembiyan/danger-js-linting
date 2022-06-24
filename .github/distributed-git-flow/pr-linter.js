@@ -3,6 +3,9 @@ const prEnabler = require("./pr-enabler");
 const fs = require("fs");
 
 function lintPr(reporter, pr) {
+  if (prEnabler.isPrFromStagingToDevelopBranch(pr) || prEnabler.isPrFromMasterToStagingBranch(pr)) {
+    return
+  }
   if (prEnabler.isPrToDevelopBranch(pr)) {
     lintAtomicChangePr(reporter, pr)
     return
@@ -63,20 +66,29 @@ function lintAtomicChangePrBody(reporter, {jiraIssueId, typeOfChage}, pr) {
   } 
 }
 
-function lintJiraIssueUrl(reporter, jiraIssueId, prSection) {
-  if (prSection.lines.length > 1) {
-    reporter.fail(`${prSection.title} section should contain only one line with the corresponding JIRA ISSUE URLs. A PR should always point to one JIRA ISSUE` )
+function lintJiraIssueUrl(reporter, jiraIssueId, jiraIssueUrlSection) {
+  if (jiraIssueUrlSection.lines.length > 1) {
+    reporter.fail(`${jiraIssueUrlSection.title} section should contain only one line with the corresponding JIRA ISSUE URLs. A PR should always point to one JIRA ISSUE` )
     return;
   }
   let expectedJiraIssueUrl = `https://${process.env.ALTASSIAN_HOST_NAME}.atlassian.net/browse/${jiraIssueId}`
-  if (prSection.lines[0] !== expectedJiraIssueUrl) {
-    reporter.fail(`${prSection.title}: Expected: "${expectedJiraIssueUrl}" Found: "${prSection.lines[0]}"`);
+  if (jiraIssueUrlSection.lines[0] !== expectedJiraIssueUrl) {
+    reporter.fail(`${jiraIssueUrlSection.title}: Expected: "${expectedJiraIssueUrl}" Found: "${jiraIssueUrlSection.lines[0]}"`);
   }
+}
+
+function lintRootCause(reporter, rootCauseSection) {
+  if (rootCauseSection.lines[0].trim().toLowerCase() == "n/a") {
+    reporter.fail(`${rootCauseSection.title}: Should not contain ${rootCauseSection.lines[0]}`);
+  } 
 }
 
 function lintAtomicChangePrBodySection(reporter, jiraIssueId, key, prSection) {
   if (key == "JIRA ISSUE URL") {
     return lintJiraIssueUrl(reporter, jiraIssueId, prSection);
+  }
+  if (key == "ROOT CAUSE") {
+    return lintRootCause(reporter, prSection);
   }
 }
 

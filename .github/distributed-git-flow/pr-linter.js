@@ -22,26 +22,72 @@ function lintPr(reporter, pr) {
     lintPrFromStagingToMaster(reporter, pr)
     return
   }
-  reporter.warn(`PR linting from ${pr.head.ref} to ${pr.base.ref} not supported`)
+  reporter.warn(`PR linting from \`${pr.head.ref}\` to \`${pr.base.ref}\` not supported`)
 }
 
 function lintPrFromDevelopToStaging(reporter, pr) {
+  lintConsolidatedChangesPrTitle(reporter, pr);
+  lintConsolidatedChangesPrBody(reporter, pr);
+}
 
+function lintConsolidatedChangesPrTitle(reporter, {title, head}) {
+  let expectedPrTitle = head.ref.charAt(0).toUpperCase() + head.ref.slice(1)
+  if (title !== expectedPrTitle) {
+    reporter.fail(`Expected PR Title \`${expectedPrTitle}\` but found \`${title}\``)
+  }
+}
+
+function lintConsolidatedChangesPrBody(reporter, pr) {
+  let prBodySections = prParser.parseBody(pr.body);
+  let changelogSection = prBodySections["CHANGELOG"];
+  let jiraIssueUrlsSection = prBodySections["JIRA ISSUE URLS"];
+  let prism8UrlSection = prBodySections["PRISM 8 REPORT URL"];
+
+  if (!changelogSection || changelogSection.lines == 0) {
+    reporter.fail("`CHANGELOG` section is required")
+    return;
+  }
+  if (!jiraIssueUrlsSection || jiraIssueUrlsSection.lines == 0) {
+    reporter.fail("`JIRA ISSUE URLS` section is required")
+    return;
+  }
+  if (!prism8UrlSection || prism8UrlSection.lines == 0) {
+    reporter.fail("`PRISM 8 REPORT URL` section is required")
+    return;
+  }
+  lintChangelog(reporter, changelogSection);
+}
+
+function lintChangelog(reporter, {lines}) {
+  let changelogEntries = [];
+  lines.forEach(line => {
+    let changelogEntry = prParser.parseChangelogEntry(line);
+    if (changelogEntry == null) {
+      reporter.fail(`The changelog entry \`${line}\` not conforms to the format \`${prParser.PR_CHANGELOG_ENTRY_FORMAT}\`\r\nTechnically, it should match this regex \`${prParser.PR_CHANGELOG_ENTRY_REGEX}\``)
+      return 
+    }
+    changelogEntries.push(changelogEntry);
+  });
+  if (lines.length != changelogEntries.length) {
+    return null
+  }
+  return changelogEntries
 }
 
 function lintPrFromStagingToMaster(reporter, pr) {
-
+  lintConsolidatedChangesPrTitle(reporter, pr);
+  lintConsolidatedChangesPrBody(reporter, pr);
 }
 
 function lintAtomicChangePr(reporter, pr) {
   if (prEnabler.isMergeConflictResolutionPr(pr)) {
     return
   }
-  let prTitle = lintPrTitle(reporter, pr);
-  if (prTitle == null) {
+  let lintedPrTitle = lintPrTitle(reporter, pr);
+  if (lintedPrTitle == null) {
     return
   }
-  lintAtomicChangePrBody(reporter, prTitle, pr);
+  lintAtomicChangePrBody(reporter, lintedPrTitle, pr);
 }
 
 function lintAtomicChangePrBody(reporter, {jiraIssueId, typeOfChage}, pr) {
@@ -51,15 +97,15 @@ function lintAtomicChangePrBody(reporter, {jiraIssueId, typeOfChage}, pr) {
   let actualPrBodySections = prParser.parseBody(pr.body);
   for (const [key, value] of Object.entries(expectedPrBodySections)) {
     if (!actualPrBodySections[key]) {
-      reporter.fail(`PR Body should have the ${key} section`);
+      reporter.fail(`PR Body should have the \`${key}\` section`);
       continue
     }
     if (actualPrBodySections[key].lines.length == 0) {
-      reporter.fail(`The ${key} section should not be empty. Use N/A if it is not applicable/available`);
+      reporter.fail(`The \`${key}\` section should not be empty. Use \`N/A\` if it is not applicable/available`);
       continue
     }
     if (actualPrBodySections[key].lines[0] == value.lines[0]) {
-      reporter.fail(`Populate the ${key} section with the appropriate information. Use N/A if it is not applicable/available`);
+      reporter.fail(`Populate the \`${key}\` section with the appropriate information. Use \`N/A\` if it is not applicable/available`);
       continue
     }
     lintAtomicChangePrBodySection(reporter, jiraIssueId, key, actualPrBodySections[key])
@@ -68,12 +114,16 @@ function lintAtomicChangePrBody(reporter, {jiraIssueId, typeOfChage}, pr) {
 
 function lintJiraIssueUrl(reporter, jiraIssueId, jiraIssueUrlSection) {
   if (jiraIssueUrlSection.lines.length > 1) {
-    reporter.fail(`${jiraIssueUrlSection.title} section should contain only one line with the corresponding JIRA ISSUE URLs. A PR should always point to one JIRA ISSUE` )
+    reporter.fail(`\`${jiraIssueUrlSection.title}\` section should contain only one line with the corresponding JIRA ISSUE URLs. A PR should always point to one JIRA ISSUE` )
     return;
   }
+  lintJiraIssueUrl(reporter, jiraIssueId, jiraIssueUrlSection.lines[0]);
+}
+
+function lintJiraIssueUrl(reporter, jiraIssueId, jiraIssueUrl) {
   let expectedJiraIssueUrl = `https://${process.env.ALTASSIAN_HOST_NAME}.atlassian.net/browse/${jiraIssueId}`
-  if (jiraIssueUrlSection.lines[0] !== expectedJiraIssueUrl) {
-    reporter.fail(`${jiraIssueUrlSection.title}: Expected: "${expectedJiraIssueUrl}" Found: "${jiraIssueUrlSection.lines[0]}"`);
+  if (jiraIssueUrl !== expectedJiraIssueUrl) {
+    reporter.fail(`\`${jiraIssueUrlSection.title}\`: Expected: \`${expectedJiraIssueUrl}\` Found: \`${jiraIssueUrlSection.lines[0]}\``);
   }
 }
 
@@ -83,13 +133,13 @@ function hasPopulatedWithNotAvailable(section) {
 
 function lintThePresenceofNotAvailable(reporter, rootCauseSection) {
   if (hasPopulatedWithNotAvailable(rootCauseSection)) {
-    reporter.fail(`${rootCauseSection.title}: Should not contain ${rootCauseSection.lines[0]}`);
+    reporter.fail(`\`${rootCauseSection.title}\`: Should not contain \`${rootCauseSection.lines[0]}\``);
   } 
 }
 
 function lintPrism8ReportUrl(reporter, prism8ReportUrlSection) {
   if (prism8ReportUrlSection.lines.length > 1) {
-    reporter.fail(`${prism8ReportUrlSection.title} section should contain only one line with the corresponding PRISM URLs. A PR should always point to one latest PRISM RUN` )
+    reporter.fail(`\`${prism8ReportUrlSection.title}\` section should contain only one line with the corresponding PRISM URLs. A PR should always point to one latest PRISM RUN` )
     return;
   }
 }
@@ -114,11 +164,11 @@ function lintAtomicChangePrBodySection(reporter, jiraIssueId, key, prSection) {
 function lintPrTitle(reporter, {title}) {
   let prTitle = prParser.parseTitle(title);
   if (prTitle == null) {
-    reporter.fail("PR title should be of format `JIRA_ISSUE_ID (TYPE_OF_CHANGE): SOME_MEANINGFUL_TITLE`.\r\nTechnically, it should match this regex: `" + prParser.PR_TITLE_REGEX + "`");
+    reporter.fail(`PR title should be of format \`${prParser.PR_TITLE_FORMAT}\`.\r\nTechnically, it should match this regex: \`${prParser.PR_TITLE_REGEX}\``);
     return null;
   }
   if (prTitle.changeSummary.includes("REPLACE_ME")) {
-    reporter.fail("PR title should not contain " + prTitle.changeSummary)
+    reporter.fail("PR title should not contain `" + prTitle.changeSummary + "`")
   }
   return prTitle;
 }

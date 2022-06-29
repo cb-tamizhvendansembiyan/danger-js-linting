@@ -15,6 +15,10 @@ function lintPr(reporter, pr) {
       lintPrFromDevelopToStaging(reporter, pr);
       return
     }
+    if (prEnabler.isPrFromStagingBranch(pr)) {
+      lintPrFromStagingToStaging(reporter, pr);
+      return
+    }
     lintAtomicChangePr(reporter, pr)
     return
   }
@@ -26,6 +30,11 @@ function lintPr(reporter, pr) {
 }
 
 function lintPrFromDevelopToStaging(reporter, pr) {
+  lintConsolidatedChangesPrTitle(reporter, pr);
+  lintConsolidatedChangesPrBody(reporter, pr);
+}
+
+function lintPrFromStagingToStaging(reporter, pr) {
   lintConsolidatedChangesPrTitle(reporter, pr);
   lintConsolidatedChangesPrBody(reporter, pr);
 }
@@ -55,7 +64,29 @@ function lintConsolidatedChangesPrBody(reporter, pr) {
     reporter.fail("`PRISM 8 REPORT URL` section is required")
     return;
   }
-  lintChangelog(reporter, changelogSection);
+  let changelogEntries = lintChangelog(reporter, changelogSection);
+  lintJiraIssueUrlsSections(reporter, changelogEntries, jiraIssueUrlsSection);
+  lintPrism8ReportUrl(reporter, prism8UrlSection, true);
+}
+
+function lintJiraIssueUrlsSections(reporter, changelogEntries, jiraIssueUrlsSection) {
+  jiraIssueUrlsSection.lines.forEach(line => {
+    let actualJiraIssueId = lintJiraIssueUrl(reporter, line);
+    if (!actualJiraIssueId) {
+      return
+    }
+    let hasChangelogEntry = false;
+    for (let i = 0; i < changelogEntries.length; i++) {
+      if (changelogEntries[i].jiraIssueId == actualJiraIssueId) {
+        hasChangelogEntry = true;
+        break;
+      }
+    }
+    if (!hasChangelogEntry) {
+      reporter.fail(`For \`${line}\` unable to locate the corresponding changelog entry. Either it is missing or wrongly formatted`);
+    }
+  });
+  
 }
 
 function lintChangelog(reporter, {lines}) {
@@ -68,9 +99,6 @@ function lintChangelog(reporter, {lines}) {
     }
     changelogEntries.push(changelogEntry);
   });
-  if (lines.length != changelogEntries.length) {
-    return null
-  }
   return changelogEntries
 }
 
@@ -112,19 +140,30 @@ function lintAtomicChangePrBody(reporter, {jiraIssueId, typeOfChage}, pr) {
   } 
 }
 
-function lintJiraIssueUrl(reporter, jiraIssueId, jiraIssueUrlSection) {
+function lintJiraIssueUrlSection(reporter, expectedJiraIssueId, jiraIssueUrlSection) {
   if (jiraIssueUrlSection.lines.length > 1) {
     reporter.fail(`\`${jiraIssueUrlSection.title}\` section should contain only one line with the corresponding JIRA ISSUE URLs. A PR should always point to one JIRA ISSUE` )
     return;
   }
-  lintJiraIssueUrl(reporter, jiraIssueId, jiraIssueUrlSection.lines[0]);
+  lintJiraIssueUrl(reporter, jiraIssueUrlSection.lines[0], expectedJiraIssueId);
 }
 
-function lintJiraIssueUrl(reporter, jiraIssueId, jiraIssueUrl) {
-  let expectedJiraIssueUrl = `https://${process.env.ALTASSIAN_HOST_NAME}.atlassian.net/browse/${jiraIssueId}`
-  if (jiraIssueUrl !== expectedJiraIssueUrl) {
-    reporter.fail(`\`${jiraIssueUrlSection.title}\`: Expected: \`${expectedJiraIssueUrl}\` Found: \`${jiraIssueUrlSection.lines[0]}\``);
+function lintJiraIssueUrl(reporter, jiraIssueUrl, expectedJiraIssueId) {
+  if (expectedJiraIssueId) {
+    let expectedJiraIssueUrl = `https://${process.env.ALTASSIAN_HOST_NAME}.atlassian.net/browse/${expectedJiraIssueId}`
+    if (jiraIssueUrl !== expectedJiraIssueUrl) {
+      reporter.fail(`\`${jiraIssueUrlSection.title}\`: Expected: \`${expectedJiraIssueUrl}\` Found: \`${jiraIssueUrl}\``)
+      return null;
+    }
+    return expectedJiraIssueId;
   }
+  let jiraIssueUrlRegex = new RegExp("https:\/\/"+ process.env.ALTASSIAN_HOST_NAME + "\.atlassian\.net\/browse\/([\\w-]+)");
+  let match = jiraIssueUrl.match(jiraIssueUrlRegex);
+  if (!Array.isArray(match) || match.length != 2) {
+    reporter.fail(`Invalid JIRA URL: ` + jiraIssueUrl + "\r\nTechnically, it should match this regex: " + jiraIssueUrlRegex);
+    return null;
+  }
+  return match[1];
 }
 
 function hasPopulatedWithNotAvailable(section) {
@@ -137,17 +176,20 @@ function lintThePresenceofNotAvailable(reporter, rootCauseSection) {
   } 
 }
 
-function lintPrism8ReportUrl(reporter, prism8ReportUrlSection) {
+function lintPrism8ReportUrl(reporter, prism8ReportUrlSection, isMandatory) {
   if (prism8ReportUrlSection.lines.length > 1) {
     reporter.fail(`\`${prism8ReportUrlSection.title}\` section should contain only one line with the corresponding PRISM URLs. A PR should always point to one latest PRISM RUN` )
     return;
+  }
+  if (isMandatory) {
+    return lintThePresenceofNotAvailable(reporter, prism8ReportUrlSection);
   }
 }
 
 function lintAtomicChangePrBodySection(reporter, jiraIssueId, key, prSection) {
   switch (key) {
     case "JIRA ISSUE URL":
-      return lintJiraIssueUrl(reporter, jiraIssueId, prSection);
+      return lintJiraIssueUrlSection(reporter, jiraIssueId, prSection);
     case "ROOT CAUSE":
     case "SUMMARY_OF_CHANGE(s)":
     case "AREAS_OF_IMPACT":

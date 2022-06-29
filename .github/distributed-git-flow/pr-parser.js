@@ -1,6 +1,6 @@
-const PR_TITLE_REGEX = /^([\w-]+)\s?\((chore|docs|fix|feat|perf|refactor|style|test)\):\s?([\w+(,$&\s\-)*]+)/;
-const PR_TITLE_FORMAT=""
-const PR_CHANGELOG_ENTRY_REGEX = /^([\w-]+)\s?\((chore|docs|fix|feat|perf|refactor|style|test)\):\s?([\w+(,$&\s\-)*]+)\s\(([\w-]+)\)\s\[#(\d+)\]/;
+const PR_TITLE_REGEX = /^([\w-]+)\s?\((chore|docs|fix|feat|perf|refactor|style|test)\):\s?([\w+(,$&\/\s\-\.)*]+)/;
+const PR_TITLE_FORMAT="JIRA_ISSUE_ID (TYPE_OF_CHANGE): SOME_MEANINGFUL_TITLE"
+const PR_CHANGELOG_ENTRY_REGEX = /^([\w-]+)\s?\((chore|docs|fix|feat|perf|refactor|style|test)\):\s?([\w+(,$&\/\s\-\.)*]+)\s\(([\w-]+)\)\s?\[#(\d+)\]/;
 const PR_CHANGELOG_ENTRY_FORMAT ="JIRA_ISSUE_ID (TYPE_OF_CHANGE): SOME_MEANINGFUL_TITLE (GH_USER_HANDLE) [#PR_NUMBER]";
 
 function parseBody(prBody, lineSeparator) {
@@ -13,8 +13,8 @@ function parseBody(prBody, lineSeparator) {
       sections[currentSection] = {title: currentSection, lines : []}
       return
     }
-    if (currentSection && line != "") {
-      sections[currentSection].lines.push(line)
+    if (currentSection && line.trim() != "") {
+      sections[currentSection].lines.push(line.trim())
     }
   });
   return sections;

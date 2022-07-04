@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-node@v3
       - run: npm install '@babel/plugin-transform-flow-strip-types'  
       - name: Run Danger.js Checks
-        id: prLinting 
+        id: distributedGitFlowPrLint 
         uses: danger/danger-js@11.0.7
         with:
           args : '--dangerfile .github/distributed-git-flow/pr-linter-danger.js'

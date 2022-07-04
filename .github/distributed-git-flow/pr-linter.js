@@ -105,6 +105,7 @@ function lintChangelog(reporter, {lines}) {
 function lintPrFromStagingToMaster(reporter, pr) {
   lintConsolidatedChangesPrTitle(reporter, pr);
   lintConsolidatedChangesPrBody(reporter, pr);
+  lintPrBody(reporter, {typeOfChage: "master"}, pr);
 }
 
 function lintAtomicChangePr(reporter, pr) {
@@ -115,10 +116,10 @@ function lintAtomicChangePr(reporter, pr) {
   if (lintedPrTitle == null) {
     return
   }
-  lintAtomicChangePrBody(reporter, lintedPrTitle, pr);
+  lintPrBody(reporter, lintedPrTitle, pr, lintAtomicChangePrBodySection);
 }
 
-function lintAtomicChangePrBody(reporter, {jiraIssueId, typeOfChage}, pr) {
+function lintPrBody(reporter, {jiraIssueId, typeOfChage}, pr, linkPrBodySectionFn) {
   let prTemplateFilePath = __dirname.replace("distributed-git-flow", "") + `PULL_REQUEST_TEMPLATE/${typeOfChage}.md`
   let prTemplateBody = fs.readFileSync(prTemplateFilePath, {encoding: "utf-8"});
   let expectedPrBodySections = prParser.parseBody(prTemplateBody, "\n");
@@ -136,7 +137,9 @@ function lintAtomicChangePrBody(reporter, {jiraIssueId, typeOfChage}, pr) {
       reporter.fail(`Populate the \`${key}\` section with the appropriate information. Use \`N/A\` if it is not applicable/available`);
       continue
     }
-    lintAtomicChangePrBodySection(reporter, jiraIssueId, key, actualPrBodySections[key])
+    if (linkPrBodySectionFn) {
+      linkPrBodySectionFn(reporter, jiraIssueId, key, actualPrBodySections[key])
+    }
   } 
 }
 

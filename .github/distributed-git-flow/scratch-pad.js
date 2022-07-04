@@ -10,12 +10,6 @@ const reporter = {
   warn : (msg) => console.log("WARN: " + msg)
 }
 
-// const fs = require("fs");
-// const prParser = require("./pr-parser");
-// let prTemplateFilePath = __dirname.replace("distributed-git-flow", "") + `PULL_REQUEST_TEMPLATE/fix.md`
-// let prTemplateBody = fs.readFileSync(prTemplateFilePath, {encoding: "utf-8"});
-// console.log(JSON.stringify(prParser.parseBody(prTemplateBody, "\n")));
-
 octokit.pulls.get({
   owner: process.env.GH_OWNER,
   repo: process.env.GH_REPO,
